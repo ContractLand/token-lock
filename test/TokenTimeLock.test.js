@@ -13,7 +13,7 @@ const TokenTimelock = artifacts.require('TokenTimelock');
 
 contract('TokenTimelock', function ([_, owner, beneficiary]) {
   const amount = new BigNumber(100);
-  const amountPerRelease = new BigNumber(50);
+  const amountPerRelease = new BigNumber(33);
 
   context('with token', function () {
     beforeEach(async function () {
@@ -30,7 +30,8 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
       beforeEach(async function () {
         this.releaseTimeOne = (await time.latest()) + time.duration.years(1);
         this.releaseTimeTwo = (await time.latest()) + time.duration.years(2);
-        this.timelock = await TokenTimelock.new(this.token.address, beneficiary, owner, [this.releaseTimeOne, this.releaseTimeTwo]);
+        this.releaseTimeThree = (await time.latest()) + time.duration.years(3);
+        this.timelock = await TokenTimelock.new(this.token.address, beneficiary, owner, [this.releaseTimeOne, this.releaseTimeTwo, this.releaseTimeThree]);
         await this.token.setBalance(this.timelock.address, amount);
       });
 
@@ -39,6 +40,7 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
         (await this.timelock.beneficiary()).should.be.equal(beneficiary);
         (await this.timelock.releaseTime(0)).should.be.bignumber.equal(this.releaseTimeOne);
         (await this.timelock.releaseTime(1)).should.be.bignumber.equal(this.releaseTimeTwo);
+        (await this.timelock.releaseTime(2)).should.be.bignumber.equal(this.releaseTimeThree);
       });
 
       it('cannot be released before first limit', async function () {
@@ -69,6 +71,10 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
 
         await time.increaseTo(this.releaseTimeTwo + time.duration.years(1));
         await this.timelock.release();
+        (await this.token.balanceOf(beneficiary)).should.be.bignumber.equal(amountPerRelease * 2);
+
+        await time.increaseTo(this.releaseTimeThree + time.duration.years(1));
+        await this.timelock.release();
         (await this.token.balanceOf(beneficiary)).should.be.bignumber.equal(amount);
       });
 
@@ -78,6 +84,10 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
         await this.timelock.release().should.be.rejectedWith(EVMRevert);
 
         await time.increaseTo(this.releaseTimeTwo + time.duration.seconds(1));
+        await this.timelock.release();
+        await this.timelock.release().should.be.rejectedWith(EVMRevert);
+
+        await time.increaseTo(this.releaseTimeThree + time.duration.seconds(1));
         await this.timelock.release();
         await this.timelock.release().should.be.rejectedWith(EVMRevert);
 
