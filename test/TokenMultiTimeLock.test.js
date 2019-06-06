@@ -9,9 +9,9 @@ require('chai')
   .should()
 
 const TestToken = artifacts.require('TestToken');
-const TokenTimelock = artifacts.require('TokenTimelock');
+const TokenMultiTimelock = artifacts.require('TokenMultiTimelock');
 
-contract('TokenTimelock', function ([_, owner, beneficiary]) {
+contract('TokenMultiTimelock', function ([_, owner, beneficiary]) {
   const amount = new BigNumber(100);
   const amountPerRelease = new BigNumber(33);
 
@@ -23,7 +23,7 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
     it('rejects any release times in the past', async function () {
       const pastReleaseTime = (await time.latest()) - time.duration.years(1);
       const futureReleaseTime = (await time.latest()) + time.duration.years(1);
-      await TokenTimelock.new(this.token.address, beneficiary, owner, [pastReleaseTime.toString(), futureReleaseTime.toString()]).should.be.rejectedWith(EVMRevert)
+      await TokenMultiTimelock.new(this.token.address, beneficiary, owner, [pastReleaseTime.toString(), futureReleaseTime.toString()]).should.be.rejectedWith(EVMRevert)
     });
 
     context('once deployed', function () {
@@ -31,7 +31,7 @@ contract('TokenTimelock', function ([_, owner, beneficiary]) {
         this.releaseTimeOne = (await time.latest()) + time.duration.years(1);
         this.releaseTimeTwo = (await time.latest()) + time.duration.years(2);
         this.releaseTimeThree = (await time.latest()) + time.duration.years(3);
-        this.timelock = await TokenTimelock.new(this.token.address, beneficiary, owner, [this.releaseTimeOne, this.releaseTimeTwo, this.releaseTimeThree]);
+        this.timelock = await TokenMultiTimelock.new(this.token.address, beneficiary, owner, [this.releaseTimeOne, this.releaseTimeTwo, this.releaseTimeThree]);
         await this.token.setBalance(this.timelock.address, amount);
       });
 
