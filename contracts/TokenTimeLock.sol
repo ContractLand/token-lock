@@ -80,7 +80,7 @@ contract TokenMultiTimelock {
      * @notice Transfers tokens unclaimed by beneficiary to owner
      */
     function claim() public {
-      require(msg.sender == _owner, "only owner");
+      require(msg.sender == _owner, "TokenMultiTimelock: only owner can claim");
 
       uint256 amount = _token.balanceOf(address(this));
       require(amount > 0, "TokenMultiTimelock: no tokens to claim");
